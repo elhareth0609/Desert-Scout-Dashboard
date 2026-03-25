@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "desert-aerial",
+      "description": "Aerial view of a desert landscape",
+      "imageUrl": "https://picsum.photos/seed/desert1/1200/800",
+      "imageHint": "desert aerial"
+    },
+    {
+      "id": "drone-camera-view",
+      "description": "View from a drone camera over sand dunes",
+      "imageUrl": "https://picsum.photos/seed/drone/800/600",
+      "imageHint": "desert dunes"
+    }
+  ]
 }
