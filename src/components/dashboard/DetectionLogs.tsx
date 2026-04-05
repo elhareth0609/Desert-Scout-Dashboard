@@ -5,27 +5,25 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { History, Search, Camera, AlertTriangle, Clock } from "lucide-react";
+import { History, Search, Camera, AlertTriangle, Clock, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export type LogEntry = {
   id: string;
-  detectedType: string;
-  confidence: number;
+  detectedObjectType: string;
+  confidenceScore: number;
   latitude: number;
   longitude: number;
   timestamp: string;
 };
 
-const INITIAL_LOGS: LogEntry[] = [
-  { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: "2024-05-20T14:30:00.000Z" },
-  { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: "2024-05-20T14:25:00.000Z" },
-  { id: "3", detectedType: "Human Activity", confidence: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: "2024-05-20T14:15:00.000Z" },
-  { id: "4", detectedType: "Wildlife", confidence: 0.89, latitude: 33.3690, longitude: 6.8530, timestamp: "2024-05-20T13:30:00.000Z" },
-  { id: "5", detectedType: "Camel", confidence: 0.91, latitude: 33.3672, longitude: 6.8518, timestamp: "2024-05-20T12:30:00.000Z" },
-];
+interface DetectionLogsProps {
+  onSelectLog?: (log: any) => void;
+  logs: any[];
+  isLoading: boolean;
+}
 
-export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) => void }) {
+export function DetectionLogs({ onSelectLog, logs, isLoading }: DetectionLogsProps) {
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -33,8 +31,8 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
     setMounted(true);
   }, []);
 
-  const filteredLogs = INITIAL_LOGS.filter(log => 
-    log.detectedType.toLowerCase().includes(search.toLowerCase())
+  const filteredLogs = logs.filter(log => 
+    (log.detectedObjectType || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -46,7 +44,7 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
             Detection Logs
           </CardTitle>
           <Badge variant="outline" className="font-mono text-[10px] uppercase">
-            {filteredLogs.length} Records
+            {isLoading ? "..." : `${filteredLogs.length} Records`}
           </Badge>
         </div>
         <div className="relative">
@@ -60,41 +58,52 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-3">
-            {filteredLogs.map((log) => (
-              <div 
-                key={log.id} 
-                onClick={() => onSelectLog?.(log)}
-                className="group p-3 rounded-lg bg-background/50 border border-border/50 hover:border-primary/50 transition-colors cursor-pointer"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded bg-primary/10">
-                      {log.detectedType === "Camel" ? <Camera className="w-3 h-3 text-primary" /> : <AlertTriangle className="w-3 h-3 text-accent" />}
-                    </div>
-                    <span className="text-sm font-bold text-foreground">{log.detectedType}</span>
-                  </div>
-                  <Badge variant={log.confidence > 0.85 ? "default" : "secondary"} className="text-[10px] scale-90">
-                    {(log.confidence * 100).toFixed(0)}%
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-muted-foreground">
-                  <div>LAT: {log.latitude.toFixed(4)}</div>
-                  <div>LON: {log.longitude.toFixed(4)}</div>
-                </div>
-                <div className="mt-2 flex items-center gap-1 text-[9px] text-muted-foreground/60 uppercase tracking-wider">
-                  <Clock className="w-3 h-3" />
-                  {mounted ? (
-                    `${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${new Date(log.timestamp).toLocaleDateString()}`
-                  ) : (
-                    "Calculating..."
-                  )}
-                </div>
-              </div>
-            ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-48">
+            <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
           </div>
-        </ScrollArea>
+        ) : (
+          <ScrollArea className="h-full">
+            <div className="p-4 space-y-3">
+              {filteredLogs.length === 0 && (
+                <div className="text-center py-10 text-muted-foreground text-xs font-mono uppercase">
+                  No operational data found
+                </div>
+              )}
+              {filteredLogs.map((log) => (
+                <div 
+                  key={log.id} 
+                  onClick={() => onSelectLog?.(log)}
+                  className="group p-3 rounded-lg bg-background/50 border border-border/50 hover:border-primary/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-primary/10">
+                        {log.detectedObjectType === "Camel" ? <Camera className="w-3 h-3 text-primary" /> : <AlertTriangle className="w-3 h-3 text-accent" />}
+                      </div>
+                      <span className="text-sm font-bold text-foreground">{log.detectedObjectType}</span>
+                    </div>
+                    <Badge variant={log.confidenceScore > 0.85 ? "default" : "secondary"} className="text-[10px] scale-90">
+                      {(log.confidenceScore * 100).toFixed(0)}%
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-muted-foreground">
+                    <div>LAT: {log.latitude.toFixed(4)}</div>
+                    <div>LON: {log.longitude.toFixed(4)}</div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-1 text-[9px] text-muted-foreground/60 uppercase tracking-wider">
+                    <Clock className="w-3 h-3" />
+                    {mounted ? (
+                      `${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${new Date(log.timestamp).toLocaleDateString()}`
+                    ) : (
+                      "Calculating..."
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );

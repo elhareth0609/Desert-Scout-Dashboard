@@ -4,18 +4,32 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/dashboard/Navbar";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, FileText, Download, Calendar } from "lucide-react";
+import { Search, Filter, FileText, Download, Calendar, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { collection, query, orderBy } from "firebase/firestore";
 
 export default function ArchivePage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
   const [search, setSearch] = useState("");
+
+  const flightsRef = useMemoFirebase(() => 
+    user ? collection(firestore, `users/${user.uid}/flightLogs`) : null,
+    [user, firestore]
+  );
+
+  const flightsQuery = useMemoFirebase(() => 
+    flightsRef ? query(flightsRef, orderBy("startTime", "desc")) : null,
+    [flightsRef]
+  );
+
+  const { data: flights, isLoading: isFlightsLoading } = useCollection<any>(flightsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -23,17 +37,9 @@ export default function ArchivePage() {
     }
   }, [user, isUserLoading, router]);
 
-  const mockFlights = [
-    { id: "FL-2024-001", date: "2024-05-20", duration: "45m", detections: 12, status: "Completed", area: "Sector B-12" },
-    { id: "FL-2024-002", date: "2024-05-19", duration: "1h 10m", detections: 4, status: "Aborted", area: "North Ridge" },
-    { id: "FL-2024-003", date: "2024-05-18", duration: "32m", detections: 28, status: "Completed", area: "Sector C-04" },
-    { id: "FL-2024-004", date: "2024-05-15", duration: "55m", detections: 0, status: "Completed", area: "Base Perimeter" },
-    { id: "FL-2024-005", date: "2024-05-12", duration: "1h 05m", detections: 15, status: "Completed", area: "Sector A-01" },
-  ];
-
-  const filteredFlights = mockFlights.filter(f => 
-    f.id.toLowerCase().includes(search.toLowerCase()) || 
-    f.area.toLowerCase().includes(search.toLowerCase())
+  const filteredFlights = (flights || []).filter(f => 
+    (f.id || "").toLowerCase().includes(search.toLowerCase()) || 
+    (f.description || "").toLowerCase().includes(search.toLowerCase())
   );
 
   if (isUserLoading || !user) return null;
@@ -79,47 +85,56 @@ export default function ArchivePage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="rounded-md border border-border/50">
-              <Table>
-                <TableHeader className="bg-secondary/20">
-                  <TableRow>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest">Flight ID</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest">Date</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest">Operation Area</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest">Duration</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest text-center">AI Detections</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest">Status</TableHead>
-                    <TableHead className="font-headline text-[10px] uppercase tracking-widest text-right">Report</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredFlights.map((flight) => (
-                    <TableRow key={flight.id} className="hover:bg-primary/5 transition-colors">
-                      <TableCell className="font-mono text-xs font-bold">{flight.id}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{flight.date}</TableCell>
-                      <TableCell className="text-xs font-medium">{flight.area}</TableCell>
-                      <TableCell className="text-xs font-mono">{flight.duration}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="font-mono">{flight.detections}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={`text-[9px] uppercase tracking-tighter ${
-                            flight.status === 'Completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
-                          }`}
-                        >
-                          {flight.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <FileText className="w-4 h-4 text-primary" />
-                        </Button>
-                      </TableCell>
+            <div className="rounded-md border border-border/50 overflow-hidden">
+              {isFlightsLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary/50" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader className="bg-secondary/20">
+                    <TableRow>
+                      <TableHead className="font-headline text-[10px] uppercase tracking-widest">Flight ID</TableHead>
+                      <TableHead className="font-headline text-[10px] uppercase tracking-widest">Date</TableHead>
+                      <TableHead className="font-headline text-[10px] uppercase tracking-widest">Description</TableHead>
+                      <TableHead className="font-headline text-[10px] uppercase tracking-widest">Status</TableHead>
+                      <TableHead className="font-headline text-[10px] uppercase tracking-widest text-right">Report</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredFlights.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground font-mono uppercase text-xs">
+                          Archive vault empty
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {filteredFlights.map((flight) => (
+                      <TableRow key={flight.id} className="hover:bg-primary/5 transition-colors">
+                        <TableCell className="font-mono text-xs font-bold">{flight.id}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(flight.startTime).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">{flight.description || "N/A"}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={`text-[9px] uppercase tracking-tighter ${
+                              flight.status === 'completed' || flight.status === 'ongoing' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                            }`}
+                          >
+                            {flight.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <FileText className="w-4 h-4 text-primary" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </CardContent>
         </Card>

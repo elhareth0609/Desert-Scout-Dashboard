@@ -6,9 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Sparkles, BrainCircuit, Activity, FileText, ChevronRight, Loader2 } from "lucide-react";
 import { analyzeDetectionLogs, AnalyzeDetectionLogsOutput } from "@/ai/flows/analyze-detection-logs";
-import { LogEntry } from "./DetectionLogs";
 
-export function AIInsights({ logs }: { logs: LogEntry[] }) {
+export function AIInsights({ logs }: { logs: any[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeDetectionLogsOutput | null>(null);
 
@@ -16,11 +15,11 @@ export function AIInsights({ logs }: { logs: LogEntry[] }) {
     setLoading(true);
     try {
       const formattedLogs = logs.map(l => ({
-        detectedType: l.detectedType,
-        confidence: l.confidence,
-        latitude: l.latitude,
-        longitude: l.longitude,
-        timestamp: l.timestamp
+        detectedType: l.detectedObjectType || "Unknown",
+        confidence: l.confidenceScore || 0,
+        latitude: l.latitude || 0,
+        longitude: l.longitude || 0,
+        timestamp: l.timestamp || new Date().toISOString()
       }));
 
       const output = await analyzeDetectionLogs({
