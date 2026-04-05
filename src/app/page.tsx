@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 export default function DashboardPage() {
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   
-  // Simulated logs for AI Insights component
+  // Simulated logs for AI Insights component - using static timestamps to avoid hydration issues
   const mockLogs: LogEntry[] = [
-    { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: new Date(Date.now() - 120000).toISOString() },
-    { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: new Date(Date.now() - 450000).toISOString() },
-    { id: "3", detectedType: "Human Activity", confidence: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: new Date(Date.now() - 1200000).toISOString() },
+    { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: "2024-05-20T14:30:00.000Z" },
+    { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: "2024-05-20T14:25:00.000Z" },
+    { id: "3", detectedType: "Human Activity", confidence: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: "2024-05-20T14:15:00.000Z" },
   ];
 
   return (

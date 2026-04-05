@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,16 +18,21 @@ export type LogEntry = {
 };
 
 const INITIAL_LOGS: LogEntry[] = [
-  { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: new Date(Date.now() - 120000).toISOString() },
-  { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: new Date(Date.now() - 450000).toISOString() },
-  { id: "3", detectedType: "Human Activity", confidence: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: new Date(Date.now() - 1200000).toISOString() },
-  { id: "4", detectedType: "Wildlife", confidence: 0.89, latitude: 33.3690, longitude: 6.8530, timestamp: new Date(Date.now() - 3600000).toISOString() },
-  { id: "5", detectedType: "Camel", confidence: 0.91, latitude: 33.3672, longitude: 6.8518, timestamp: new Date(Date.now() - 7200000).toISOString() },
+  { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: "2024-05-20T14:30:00.000Z" },
+  { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: "2024-05-20T14:25:00.000Z" },
+  { id: "3", detectedType: "Human Activity", confidence: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: "2024-05-20T14:15:00.000Z" },
+  { id: "4", detectedType: "Wildlife", confidence: 0.89, latitude: 33.3690, longitude: 6.8530, timestamp: "2024-05-20T13:30:00.000Z" },
+  { id: "5", detectedType: "Camel", confidence: 0.91, latitude: 33.3672, longitude: 6.8518, timestamp: "2024-05-20T12:30:00.000Z" },
 ];
 
 export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) => void }) {
+  const [mounted, setMounted] = useState(false);
   const [logs] = useState<LogEntry[]>(INITIAL_LOGS);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredLogs = logs.filter(log => 
     log.detectedType.toLowerCase().includes(search.toLowerCase())
@@ -80,7 +85,11 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
                   <div>LON: {log.longitude.toFixed(4)}</div>
                 </div>
                 <div className="mt-2 text-[9px] text-muted-foreground/60 uppercase tracking-wider">
-                  {new Date(log.timestamp).toLocaleTimeString()} — {new Date(log.timestamp).toLocaleDateString()}
+                  {mounted ? (
+                    `${new Date(log.timestamp).toLocaleTimeString()} — ${new Date(log.timestamp).toLocaleDateString()}`
+                  ) : (
+                    "Loading..."
+                  )}
                 </div>
               </div>
             ))}
