@@ -22,7 +22,7 @@ export default function DashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Simulated logs for AI Insights component
+  // Static mock logs to prevent hydration mismatch from dynamic generation
   const mockLogs: LogEntry[] = [
     { id: "1", detectedType: "Camel", confidence: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: "2024-05-20T14:30:00.000Z" },
     { id: "2", detectedType: "Vehicle Tracks", confidence: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: "2024-05-20T14:25:00.000Z" },
@@ -42,37 +42,39 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1920px] mx-auto w-full">
+        {/* Left Column: Vision and Navigation */}
         <div className="lg:col-span-8 space-y-6">
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Live Surveillance Feed</h2>
+              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Tactical Surveillance Feed</h2>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                <span className="text-[10px] font-mono font-bold text-accent uppercase">Encrypted Stream</span>
+                <span className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest">AES-256 Encrypted</span>
               </div>
             </div>
             <LiveFeed />
           </section>
 
           <section className="space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Tactical Positioning</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Digital Positioning System</h2>
             <MapPanel />
           </section>
         </div>
 
-        <div className="lg:col-span-4 space-y-6 flex flex-col">
-          <section className="shrink-0">
+        {/* Right Column: Intelligence and Telemetry */}
+        <div className="lg:col-span-4 space-y-6 flex flex-col h-full overflow-hidden">
+          <div className="shrink-0">
             <TelemetryPanel />
-          </section>
+          </div>
 
-          <section className="flex-1 min-h-0 flex flex-col gap-6">
-            <div className="flex-1 min-h-[400px]">
+          <div className="flex-1 flex flex-col gap-6 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
               <DetectionLogs onSelectLog={setSelectedLog} />
             </div>
             <div className="shrink-0">
               <AIInsights logs={mockLogs} />
             </div>
-          </section>
+          </div>
         </div>
       </main>
 
@@ -80,19 +82,15 @@ export default function DashboardPage() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span>FC Connection: MAVLINK/UART</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span>GCS Link: STABLE</span>
+            <span>Link: MAVLINK/SAT</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-accent" />
-            <span>AI CORE: ACTIVE</span>
+            <span>AI CORE: NOMINAL</span>
           </div>
         </div>
         <div>
-          EL OUED OPERATIONS HUB // 33° 21' N 6° 52' E
+          EL OUED SECTOR B-12 // 33° 21' N 6° 52' E
         </div>
       </footer>
     </div>

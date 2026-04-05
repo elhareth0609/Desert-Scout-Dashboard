@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { History, Search, Filter, Camera, AlertTriangle } from "lucide-react";
+import { History, Search, Camera, AlertTriangle, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export type LogEntry = {
@@ -27,14 +27,13 @@ const INITIAL_LOGS: LogEntry[] = [
 
 export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) => void }) {
   const [mounted, setMounted] = useState(false);
-  const [logs] = useState<LogEntry[]>(INITIAL_LOGS);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const filteredLogs = logs.filter(log => 
+  const filteredLogs = INITIAL_LOGS.filter(log => 
     log.detectedType.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -61,7 +60,7 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
         </div>
       </CardHeader>
       <CardContent className="p-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-full">
           <div className="p-4 space-y-3">
             {filteredLogs.map((log) => (
               <div 
@@ -84,11 +83,12 @@ export function DetectionLogs({ onSelectLog }: { onSelectLog?: (log: LogEntry) =
                   <div>LAT: {log.latitude.toFixed(4)}</div>
                   <div>LON: {log.longitude.toFixed(4)}</div>
                 </div>
-                <div className="mt-2 text-[9px] text-muted-foreground/60 uppercase tracking-wider">
+                <div className="mt-2 flex items-center gap-1 text-[9px] text-muted-foreground/60 uppercase tracking-wider">
+                  <Clock className="w-3 h-3" />
                   {mounted ? (
-                    `${new Date(log.timestamp).toLocaleTimeString()} — ${new Date(log.timestamp).toLocaleDateString()}`
+                    `${new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} — ${new Date(log.timestamp).toLocaleDateString()}`
                   ) : (
-                    "Loading..."
+                    "Calculating..."
                   )}
                 </div>
               </div>
