@@ -1,128 +1,116 @@
+/**
+ * Firestore Security Rules
+ *
+ * CORE PHILOSOPHY:
+ * This ruleset implements a strict hierarchical ownership model. Access control is primarily
+ * driven by the document path, specifically the {userId} wildcard. This ensures that every 
+ * piece of data—from high-level flight logs to granular telemetry points—is private and 
+ * accessible only by the authenticated user who owns that specific data tree.
+ *
+ * DATA STRUCTURE:
+ * The data is organized into a nested hierarchy:
+ * /users/{userId} -> The root document for a pilot/operator.
+ *   /flightLogs/{flightLogId} -> Metadata for a specific drone flight.
+ *     /telemetryPoints/{telemetryPointId} -> Time-series location and status data for that flight.
+ *     /detectionEvents/{detectionEventId} -> AI-generated events (e.g., camel sightings) for that flight.
+ *
+ * KEY SECURITY DECISIONS:
+ * 1. Path-Based Authorization: All authorization logic relies on comparing the {userId} 
+ *    in the document path with the 'request.auth.uid'. This provides high-performance 
+ *    security without the need for expensive 'get()' cross-document lookups.
+ * 2. Relational Integrity: While in prototyping mode we don't enforce strict schema 
+ *    validation for all fields, we DO enforce that 'flightLogId' fields within subcollections 
+ *    match the ID in the path to prevent data corruption or unauthorized cross-linking.
+ * 3. Implicit Write Safety: Destructive operations (update, delete) are strictly 
+ *    guarded to ensure the document exists and the requester is the verified owner.
+ * 4. Anonymous Support: Rules are designed to support 'anonymous' and 'password' 
+ *    providers as defined in the application requirements, relying solely on the 
+ *    assigned UID.
+ */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * FIRESTORE SECURITY RULES DOCUMENTATION
-     *
-     * Core Philosophy:
-     * This ruleset implements a robust, multi-tenant authorization model designed for high-stakes 
-     * drone operations. Access is governed by a combination of global administrative roles (DBAC) 
-     * and a collaborative "Shared Access" model for specific operations.
-     *
-     * Data Structure:
-     * - /roles_admin: A restricted collection where the existence of a UID document grants global admin rights.
-     * - /drones: A global registry of drone hardware.
-     * - /operations: The root of the operational hierarchy. All mission-related data (missions, 
-     *   telemetry, detections, reports) is nested under an operation.
-     *
-     * Key Security Decisions:
-     * 1. Denormalization for Authorization: To optimize performance and ensure rules are 
-     *    "Queries Are Not Filters" (QAP) compliant, authorization metadata (operationOwnerId 
-     *    and the operationMembers map) is denormalized from the parent Operation document 
-     *    directly into every child Mission, TelemetryRecord, DetectionEvent, and ArchiveReport.
-     * 2. Shared Access: Operations use a 'members' map allowing for fine-grained permission 
-     *    checks (e.g., owner vs. member) without costly cross-document lookups.
-     * 3. Prototyping Flexibility: While authorization is strictly enforced based on UIDs, 
-     *    data schemas are not strictly validated to allow for rapid iteration on drone 
-     *    telemetry and detection models.
-     * 4. Relational Integrity: The rules enforce that critical ownership fields (like ownerId) 
-     *    are set correctly on creation and remain immutable on update.
-     */
-
     // --- GLOBAL HELPER FUNCTIONS ---
 
-    /** @description Checks if the request is from an authenticated user. */
+    /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user has a document in the roles_admin collection. */
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    /** Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the user is a member of the provided members map. */
-    function isMember(membersMap) {
-      return isSignedIn() && membersMap[request.auth.uid] != null;
+    /** Checks if the user is the owner and the document exists for state-changing operations. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
     }
 
     // --- COLLECTION RULES ---
 
     /**
-     * @description Global administrator roles. Existence of a document grants full DB access.
-     * @path /roles_admin/{userId}
-     * @allow (get) Any signed-in user can check their own admin status.
-     * @deny (create/update/delete) Anyone who is not already an admin.
-     * @principle Database Access Control (DBAC) via identity lookup.
+     * @description Rules for the root user document. Enables self-creation and profile management.
+     * @path /users/{userId}
+     * @allow (create) if user 'abc' is authenticated and creating /users/abc.
+     * @deny (create) if user 'abc' tries to create /users/xyz.
+     * @principle P3.4: Self-Creation pattern for root user documents.
      */
-    match /roles_admin/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
-    }
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Users cannot list other users.
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
 
-    /**
-     * @description Hardware registry for drones.
-     * @path /drones/{droneId}
-     * @allow (get/list) Any signed-in operational user.
-     * @deny (write) Any non-admin user trying to modify hardware records.
-     * @principle Admin-only management of global assets.
-     */
-    match /drones/{droneId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
+      /**
+       * @description Rules for flight logs. Metadata for a specific flight session.
+       * @path /users/{userId}/flightLogs/{flightLogId}
+       * @allow (get, list) if the authenticated user matches the userId in the path.
+       * @deny (create) if 'id' in data does not match the 'flightLogId' in the path.
+       * @principle P5: Validates path-to-data consistency for relational integrity.
+       */
+      match /flightLogs/{flightLogId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.id == flightLogId;
+        allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+        allow delete: if isExistingOwner(userId);
 
-    /**
-     * @description Primary collection for operational campaigns.
-     * @path /operations/{operationId}
-     * @allow (create) Any signed-in user who sets themselves as the owner.
-     * @allow (get/list) The owner or any user listed in the members map.
-     * @deny (delete) Anyone other than the operation owner.
-     * @principle Collaborative shared access with ownership-based write permissions.
-     */
-    match /operations/{operationId} {
-      allow get, list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMember(resource.data.members));
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isSignedIn() && resource != null && (resource.data.ownerId == request.auth.uid || isMember(resource.data.members));
-      allow delete: if isSignedIn() && resource != null && resource.data.ownerId == request.auth.uid;
-    }
+        /**
+         * @description Rules for telemetry points. High-frequency data snapshots.
+         * @path /users/{userId}/flightLogs/{flightLogId}/telemetryPoints/{telemetryPointId}
+         * @allow (list) if the owner is viewing points for their own flight.
+         * @deny (create) if 'flightLogId' in data doesn't match parent flightLogId.
+         * @principle P3.1: Ownership pattern combined with subcollection path validation.
+         */
+        match /telemetryPoints/{telemetryPointId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.flightLogId == flightLogId;
+          allow update: if isExistingOwner(userId) && request.resource.data.flightLogId == resource.data.flightLogId;
+          allow delete: if isExistingOwner(userId);
+        }
 
-    /**
-     * @description Sub-entities of an operation (Missions, Telemetry, Detections, Reports).
-     * @path /operations/{operationId}/missions/{missionId}... (and nested)
-     * @allow (create) If the operationOwnerId in data matches the requester.
-     * @allow (get/list) If the requester is the operation owner or in the operationMembers map.
-     * @deny (update) If trying to change the immutable operationOwnerId.
-     * @principle Authorization Independence via denormalized ownership fields.
-     */
-    match /operations/{operationId}/missions/{missionId} {
-      allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
-      allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
-      allow update: if isSignedIn() && resource != null && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers)) && request.resource.data.operationOwnerId == resource.data.operationOwnerId;
-      allow delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
-
-      // Nested Telemetry Records
-      match /telemetryRecords/{recordId} {
-        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
-        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
-        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
+        /**
+         * @description Rules for detection events. AI object detections recorded during flight.
+         * @path /users/{userId}/flightLogs/{flightLogId}/detectionEvents/{detectionEventId}
+         * @allow (create) if the user is the owner and links the event to the correct flight.
+         * @deny (list) if an unauthenticated user or different user attempts to access.
+         * @principle P7: Verification of document existence for updates and deletions.
+         */
+        match /detectionEvents/{detectionEventId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.flightLogId == flightLogId;
+          allow update: if isExistingOwner(userId) && request.resource.data.flightLogId == resource.data.flightLogId;
+          allow delete: if isExistingOwner(userId);
+        }
       }
-
-      // Nested Detection Events
-      match /detectionEvents/{eventId} {
-        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
-        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
-        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
-      }
-
-      // Nested Archive Reports
-      match /archiveReports/{reportId} {
-        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
-        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
-        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
-      }
+    }
+    
+    // --- DEFAULT DENY ---
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }
