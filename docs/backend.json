@@ -1,0 +1,458 @@
+{
+  "entities": {
+    "Drone": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Drone",
+      "type": "object",
+      "description": "Represents a specific unmanned aerial vehicle (drone) used for missions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Drone entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name or callsign given to the drone."
+        },
+        "model": {
+          "type": "string",
+          "description": "The make and model of the drone, e.g., 'SpeedyBee F405 V3'."
+        },
+        "serialNumber": {
+          "type": "string",
+          "description": "The unique serial number identifying the drone unit."
+        },
+        "cameraType": {
+          "type": "string",
+          "description": "Describes how the camera is connected and its type, e.g., 'CSI Ribbon' or 'USB Webcam'."
+        },
+        "detectionModelUsed": {
+          "type": "string",
+          "description": "The version or identifier of the AI detection model deployed on this drone, e.g., 'YOLOv8s' or 'custom.pt'."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "model",
+        "serialNumber",
+        "cameraType",
+        "detectionModelUsed"
+      ]
+    },
+    "Operation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Operation",
+      "type": "object",
+      "description": "Represents a planned or executed operational campaign, potentially comprising multiple drone missions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Operation entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "A descriptive name for the operational campaign."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the operation's goals, scope, and context."
+        },
+        "plannedStartDate": {
+          "type": "string",
+          "description": "The planned start date and time of the operation.",
+          "format": "date-time"
+        },
+        "plannedEndDate": {
+          "type": "string",
+          "description": "The planned end date and time of the operation.",
+          "format": "date-time"
+        },
+        "actualStartDate": {
+          "type": "string",
+          "description": "The actual start date and time of the operation.",
+          "format": "date-time"
+        },
+        "actualEndDate": {
+          "type": "string",
+          "description": "The actual end date and time of the operation.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the operation (e.g., 'Planned', 'Active', 'Completed', 'Cancelled')."
+        },
+        "areaOfFocus": {
+          "type": "string",
+          "description": "A general description of the geographic area covered by the operation, e.g., 'Northern El Oued Sector A'."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "plannedStartDate",
+        "status",
+        "areaOfFocus"
+      ]
+    },
+    "Mission": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Mission",
+      "type": "object",
+      "description": "Represents a single flight or survey conducted by a drone as part of an operation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Mission entity."
+        },
+        "droneId": {
+          "type": "string",
+          "description": "Reference to the Drone that performed this mission. (Relationship: Drone 1:N Mission)"
+        },
+        "operationId": {
+          "type": "string",
+          "description": "Reference to the Operation this mission belongs to. (Relationship: Operation 1:N Mission)"
+        },
+        "name": {
+          "type": "string",
+          "description": "A unique name or identifier for the specific mission."
+        },
+        "description": {
+          "type": "string",
+          "description": "An optional detailed description or notes about the mission."
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The start date and time of the mission.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "The end date and time of the mission.",
+          "format": "date-time"
+        },
+        "areaOfFocus": {
+          "type": "string",
+          "description": "A more specific geographic area for this particular mission."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the mission (e.g., 'Active', 'Completed', 'Finished', 'Archived')."
+        }
+      },
+      "required": [
+        "id",
+        "droneId",
+        "operationId",
+        "name",
+        "startTime",
+        "status",
+        "areaOfFocus"
+      ]
+    },
+    "TelemetryRecord": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TelemetryRecord",
+      "type": "object",
+      "description": "Stores a snapshot of drone flight telemetry data at a specific point in time during a mission.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TelemetryRecord entity."
+        },
+        "missionId": {
+          "type": "string",
+          "description": "Reference to the Mission during which this telemetry was recorded. (Relationship: Mission 1:N TelemetryRecord)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when this telemetry record was captured.",
+          "format": "date-time"
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The GPS latitude coordinate at the time of the record."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The GPS longitude coordinate at the time of the record."
+        },
+        "altitude": {
+          "type": "number",
+          "description": "The altitude of the drone in meters above sea level."
+        },
+        "groundSpeed": {
+          "type": "number",
+          "description": "The drone's speed over ground, typically in meters per second."
+        },
+        "heading": {
+          "type": "number",
+          "description": "The drone's current heading in degrees (0-359)."
+        },
+        "batteryLevel": {
+          "type": "number",
+          "description": "The drone's battery level as a percentage."
+        },
+        "flightTime": {
+          "type": "number",
+          "description": "The elapsed flight time for the current mission at the point of this record, in seconds."
+        }
+      },
+      "required": [
+        "id",
+        "missionId",
+        "timestamp",
+        "latitude",
+        "longitude",
+        "altitude",
+        "groundSpeed",
+        "heading",
+        "batteryLevel",
+        "flightTime"
+      ]
+    },
+    "DetectionEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DetectionEvent",
+      "type": "object",
+      "description": "Records details of an object detection event identified during a drone mission.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the DetectionEvent entity."
+        },
+        "missionId": {
+          "type": "string",
+          "description": "Reference to the Mission during which this detection occurred. (Relationship: Mission 1:N DetectionEvent)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The date and time when the object was detected.",
+          "format": "date-time"
+        },
+        "detectionType": {
+          "type": "string",
+          "description": "The type of object detected, e.g., 'camel', 'vehicle tracks'."
+        },
+        "confidence": {
+          "type": "number",
+          "description": "The confidence score of the detection, ranging from 0.0 to 1.0."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The GPS latitude coordinate of the drone at the moment of detection."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The GPS longitude coordinate of the drone at the moment of detection."
+        }
+      },
+      "required": [
+        "id",
+        "missionId",
+        "timestamp",
+        "detectionType",
+        "confidence",
+        "latitude",
+        "longitude"
+      ]
+    },
+    "ArchiveReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ArchiveReport",
+      "type": "object",
+      "description": "Stores generated reports, summaries, or insights, especially those produced by the AI Log Insight Tool, associated with a mission or operation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ArchiveReport entity."
+        },
+        "missionId": {
+          "type": "string",
+          "description": "Reference to the Mission that this report summarizes or is associated with. (Relationship: Mission 1:N ArchiveReport)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the archive report."
+        },
+        "content": {
+          "type": "string",
+          "description": "The full textual content of the generated insight, summary, or report."
+        },
+        "generationDate": {
+          "type": "string",
+          "description": "The date and time when the report was generated.",
+          "format": "date-time"
+        },
+        "generatedByAI": {
+          "type": "boolean",
+          "description": "Indicates whether the report was generated automatically by an AI tool."
+        },
+        "reportType": {
+          "type": "string",
+          "description": "The category or type of report, e.g., 'Summary', 'Anomaly Detection', 'Operational Insight'."
+        }
+      },
+      "required": [
+        "id",
+        "missionId",
+        "title",
+        "content",
+        "generationDate",
+        "generatedByAI",
+        "reportType"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user IDs of global administrators for Database Access Control (DBAC). The existence of a document here grants admin privileges to the {userId}.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Authentication UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/drones/{droneId}",
+        "definition": {
+          "entityName": "Drone",
+          "schema": {
+            "$ref": "#/backend/entities/Drone"
+          },
+          "description": "A top-level collection containing all registered drones. Access is typically restricted to authenticated operational users, with write access for administrators.",
+          "params": [
+            {
+              "name": "droneId",
+              "description": "The unique identifier for a specific drone."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operations/{operationId}",
+        "definition": {
+          "entityName": "Operation",
+          "schema": {
+            "$ref": "#/backend/entities/Operation"
+          },
+          "description": "Main collection for operational campaigns. Each document includes 'ownerId' and a 'members' map for collaborative authorization, which are denormalized into subcollection documents for Authorization Independence.",
+          "params": [
+            {
+              "name": "operationId",
+              "description": "The unique identifier for a specific operational campaign."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operations/{operationId}/missions/{missionId}",
+        "definition": {
+          "entityName": "Mission",
+          "schema": {
+            "$ref": "#/backend/entities/Mission"
+          },
+          "description": "Subcollection of missions conducted as part of an operation. Includes denormalized 'operationOwnerId' and 'operationMembers' map from the parent 'Operation' for Authorization Independence.",
+          "params": [
+            {
+              "name": "operationId",
+              "description": "The unique identifier of the parent operational campaign."
+            },
+            {
+              "name": "missionId",
+              "description": "The unique identifier for a specific mission within the operation."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operations/{operationId}/missions/{missionId}/telemetryRecords/{telemetryRecordId}",
+        "definition": {
+          "entityName": "TelemetryRecord",
+          "schema": {
+            "$ref": "#/backend/entities/TelemetryRecord"
+          },
+          "description": "Subcollection storing real-time telemetry data for a specific mission. Includes denormalized 'operationOwnerId' and 'operationMembers' from the ancestral 'Operation' for Authorization Independence.",
+          "params": [
+            {
+              "name": "operationId",
+              "description": "The unique identifier of the ancestral operational campaign."
+            },
+            {
+              "name": "missionId",
+              "description": "The unique identifier of the parent mission."
+            },
+            {
+              "name": "telemetryRecordId",
+              "description": "The unique identifier for a specific telemetry record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operations/{operationId}/missions/{missionId}/detectionEvents/{detectionEventId}",
+        "definition": {
+          "entityName": "DetectionEvent",
+          "schema": {
+            "$ref": "#/backend/entities/DetectionEvent"
+          },
+          "description": "Subcollection recording object detection events during a mission. Includes denormalized 'operationOwnerId' and 'operationMembers' from the ancestral 'Operation' for Authorization Independence.",
+          "params": [
+            {
+              "name": "operationId",
+              "description": "The unique identifier of the ancestral operational campaign."
+            },
+            {
+              "name": "missionId",
+              "description": "The unique identifier of the parent mission."
+            },
+            {
+              "name": "detectionEventId",
+              "description": "The unique identifier for a specific detection event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/operations/{operationId}/missions/{missionId}/archiveReports/{archiveReportId}",
+        "definition": {
+          "entityName": "ArchiveReport",
+          "schema": {
+            "$ref": "#/backend/entities/ArchiveReport"
+          },
+          "description": "Subcollection for generated reports and insights associated with a mission, used for the 'Archive' page. Includes denormalized 'operationOwnerId' and 'operationMembers' from the ancestral 'Operation' for Authorization Independence.",
+          "params": [
+            {
+              "name": "operationId",
+              "description": "The unique identifier of the ancestral operational campaign."
+            },
+            {
+              "name": "missionId",
+              "description": "The unique identifier of the parent mission."
+            },
+            {
+              "name": "archiveReportId",
+              "description": "The unique identifier for a specific archive report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, prioritizing Authorization Independence and QAP (Queries Are Not Filters) compliance. \n\n**Authorization Independence:** This is achieved through aggressive denormalization of authorization context. Each 'Operation' document will contain an 'ownerId' field (the UID of the user who created it) and a 'members' map (mapping UIDs to roles like 'viewer', 'editor'). Crucially, for all subcollections ('missions', 'telemetryRecords', 'detectionEvents', 'archiveReports'), these authorization fields ('operationOwnerId' and 'operationMembers') from the parent 'Operation' document are *copied down* into every document in the subcollection. This means that a security rule for a 'TelemetryRecord' document, for example, can determine access by inspecting 'resource.data.operationOwnerId' or 'resource.data.operationMembers' without needing to perform a costly and transaction-breaking `get()` operation on its parent 'Mission' or grandparent 'Operation' document. This significantly simplifies security rules and ensures atomic operations.\n\n**QAPs (Queries Are Not Filters):** The hierarchical path structure naturally helps with QAPs. When querying a subcollection like `/operations/{operationId}/missions`, the `operationId` is already part of the path, scoping the query to a specific operation. For 'list' operations on the top-level `/operations` collection, security rules will enforce that queries must include filters based on the 'ownerId' or 'members' map (e.g., `where('ownerId', '==', request.auth.uid)` or `where('members.' + request.auth.uid, '==', 'editor')`). This ensures that users can only retrieve lists of operations they are authorized to see, rather than filtering a broader, insecure dataset. For subcollections, since 'operationMembers' is denormalized, a rule can be written to allow listing if `resource.data.operationMembers[request.auth.uid]` exists, making the list operation inherently secure based on the document's own data. \n\n**Structural Segregation:** All documents within a given collection (or subcollection) are assumed to have a homogeneous security posture. For example, all missions within a specific operation have the same authorization context derived from that operation. The 'status' field is used for explicit state modeling, supporting features like 'Archive' pages by filtering for `status: 'Archived'` rather than segregating by access level. \n\n**DBAC:** Global roles are managed via a dedicated `/roles_admin/{userId}` collection. The mere existence of a document at this path signifies an administrative role for that user, simplifying global permission checks. This avoids custom claims, relying purely on database lookups.\n\nOverall, this structure provides a clear, maintainable, and secure foundation for the Desert Scout Dashboard application."
+  }
+}

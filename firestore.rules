@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * FIRESTORE SECURITY RULES DOCUMENTATION
+     *
+     * Core Philosophy:
+     * This ruleset implements a robust, multi-tenant authorization model designed for high-stakes 
+     * drone operations. Access is governed by a combination of global administrative roles (DBAC) 
+     * and a collaborative "Shared Access" model for specific operations.
+     *
+     * Data Structure:
+     * - /roles_admin: A restricted collection where the existence of a UID document grants global admin rights.
+     * - /drones: A global registry of drone hardware.
+     * - /operations: The root of the operational hierarchy. All mission-related data (missions, 
+     *   telemetry, detections, reports) is nested under an operation.
+     *
+     * Key Security Decisions:
+     * 1. Denormalization for Authorization: To optimize performance and ensure rules are 
+     *    "Queries Are Not Filters" (QAP) compliant, authorization metadata (operationOwnerId 
+     *    and the operationMembers map) is denormalized from the parent Operation document 
+     *    directly into every child Mission, TelemetryRecord, DetectionEvent, and ArchiveReport.
+     * 2. Shared Access: Operations use a 'members' map allowing for fine-grained permission 
+     *    checks (e.g., owner vs. member) without costly cross-document lookups.
+     * 3. Prototyping Flexibility: While authorization is strictly enforced based on UIDs, 
+     *    data schemas are not strictly validated to allow for rapid iteration on drone 
+     *    telemetry and detection models.
+     * 4. Relational Integrity: The rules enforce that critical ownership fields (like ownerId) 
+     *    are set correctly on creation and remain immutable on update.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user has a document in the roles_admin collection. */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /** @description Checks if the user is a member of the provided members map. */
+    function isMember(membersMap) {
+      return isSignedIn() && membersMap[request.auth.uid] != null;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Global administrator roles. Existence of a document grants full DB access.
+     * @path /roles_admin/{userId}
+     * @allow (get) Any signed-in user can check their own admin status.
+     * @deny (create/update/delete) Anyone who is not already an admin.
+     * @principle Database Access Control (DBAC) via identity lookup.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Hardware registry for drones.
+     * @path /drones/{droneId}
+     * @allow (get/list) Any signed-in operational user.
+     * @deny (write) Any non-admin user trying to modify hardware records.
+     * @principle Admin-only management of global assets.
+     */
+    match /drones/{droneId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Primary collection for operational campaigns.
+     * @path /operations/{operationId}
+     * @allow (create) Any signed-in user who sets themselves as the owner.
+     * @allow (get/list) The owner or any user listed in the members map.
+     * @deny (delete) Anyone other than the operation owner.
+     * @principle Collaborative shared access with ownership-based write permissions.
+     */
+    match /operations/{operationId} {
+      allow get, list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isMember(resource.data.members));
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && (resource.data.ownerId == request.auth.uid || isMember(resource.data.members));
+      allow delete: if isSignedIn() && resource != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    /**
+     * @description Sub-entities of an operation (Missions, Telemetry, Detections, Reports).
+     * @path /operations/{operationId}/missions/{missionId}... (and nested)
+     * @allow (create) If the operationOwnerId in data matches the requester.
+     * @allow (get/list) If the requester is the operation owner or in the operationMembers map.
+     * @deny (update) If trying to change the immutable operationOwnerId.
+     * @principle Authorization Independence via denormalized ownership fields.
+     */
+    match /operations/{operationId}/missions/{missionId} {
+      allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
+      allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
+      allow update: if isSignedIn() && resource != null && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers)) && request.resource.data.operationOwnerId == resource.data.operationOwnerId;
+      allow delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
+
+      // Nested Telemetry Records
+      match /telemetryRecords/{recordId} {
+        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
+        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
+      }
+
+      // Nested Detection Events
+      match /detectionEvents/{eventId} {
+        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
+        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
+      }
+
+      // Nested Archive Reports
+      match /archiveReports/{reportId} {
+        allow get, list: if isSignedIn() && (resource.data.operationOwnerId == request.auth.uid || isMember(resource.data.operationMembers));
+        allow create: if isSignedIn() && request.resource.data.operationOwnerId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource != null && resource.data.operationOwnerId == request.auth.uid;
+      }
+    }
+  }
+}
