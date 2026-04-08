@@ -4,15 +4,17 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, BrainCircuit, Activity, FileText, ChevronRight, Loader2 } from "lucide-react";
+import { Sparkles, BrainCircuit, Activity, FileText, ChevronRight, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { analyzeDetectionLogs, AnalyzeDetectionLogsOutput } from "@/ai/flows/analyze-detection-logs";
 
 export function AIInsights({ logs }: { logs: any[] }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeDetectionLogsOutput | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     setLoading(true);
+    setError(null);
     try {
       const formattedLogs = logs.map(l => ({
         detectedType: l.detectedObjectType || "Unknown",
@@ -28,7 +30,17 @@ export function AIInsights({ logs }: { logs: any[] }) {
       });
       setResult(output);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("AI Analysis failed", error);
+      
+      // Check if it's a service unavailable error
+      if (errorMsg.includes("503") || errorMsg.includes("high demand")) {
+        setError("AI service is temporarily unavailable due to high demand. Please try again in a moment.");
+      } else if (errorMsg.includes("API key")) {
+        setError("Google AI API key is not configured. Please check your .env.local file.");
+      } else {
+        setError("Failed to analyze logs. Please try again or check your connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -48,7 +60,18 @@ export function AIInsights({ logs }: { logs: any[] }) {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {!result ? (
+        {error ? (
+          <div className="py-6 text-center space-y-4">
+            <div className="p-4 rounded-full bg-destructive/10 w-fit mx-auto">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            </div>
+            <div className="max-w-[240px] mx-auto">
+              <p className="text-xs text-destructive font-medium">
+                {error}
+              </p>
+            </div>
+          </div>
+        ) : !result ? (
           <div className="py-6 text-center space-y-4">
             <div className="p-4 rounded-full bg-primary/10 w-fit mx-auto">
               <Activity className="w-8 h-8 text-primary animate-pulse" />
@@ -106,10 +129,12 @@ export function AIInsights({ logs }: { logs: any[] }) {
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : error ? (
+            <RotateCcw className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" />
           ) : (
             <Sparkles className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" />
           )}
-          {result ? "Re-Analyze Logs" : "Generate Report"}
+          {loading ? "Analyzing..." : error ? "Retry Analysis" : result ? "Re-Analyze Logs" : "Generate Report"}
         </Button>
       </CardFooter>
     </Card>

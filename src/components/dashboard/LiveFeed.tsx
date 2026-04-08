@@ -10,24 +10,30 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export function LiveFeed() {
   const [detections, setDetections] = useState([
-    { id: 1, label: "Camel", confidence: 0.92, x: 20, y: 30, w: 15, h: 20 },
-    { id: 2, label: "Vehicle Tracks", confidence: 0.78, x: 55, y: 60, w: 25, h: 10 },
+    { id: 1, label: "human trace", confidence: 0.78, x: 64.5, y: 73, w: 8.5, h: 19 },
+    { id: 2, label: "human trace", confidence: 0.80, x: 47, y: 77, w: 9.3, h: 16 },
+    { id: 3, label: "human trace", confidence: 0.82, x: 27.8, y: 68, w: 11.4, h: 12 },  
+    { id: 4, label: "human trace", confidence: 0.75, x: 47.5, y: 61, w: 9.4, h: 10.5 },
+    { id: 5, label: "human trace", confidence: 0.79, x: 26.2, y: 52.8, w: 5.5, h: 9 }, 
+    { id: 6, label: "human trace", confidence: 0.71, x: 47.8, y: 43.8, w: 4.4, h: 10.5 },
+    { id: 7, label: "human trace", confidence: 0.74, x: 16.8, y: 42.8, w: 6.3, h: 7 }, 
+    { id: 8, label: "human trace", confidence: 0.71, x: 39, y: 37, w: 5.5, h: 7.5 }, 
   ]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDetections((prev) =>
-        prev.map((d) => ({
-          ...d,
-          x: Math.max(0, Math.min(80, d.x + (Math.random() - 0.5) * 2)),
-          y: Math.max(0, Math.min(80, d.y + (Math.random() - 0.5) * 2)),
-        }))
-      );
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setDetections((prev) =>
+  //       prev.map((d) => ({
+  //         ...d,
+  //         x: Math.max(0, Math.min(80, d.x + (Math.random() - 0.5) * 2)),
+  //         y: Math.max(0, Math.min(80, d.y + (Math.random() - 0.5) * 2)),
+  //       }))
+  //     );
+  //   }, 2000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
-  const cameraImage = PlaceHolderImages.find((img) => img.id === "drone-camera-view");
+  const cameraImage = PlaceHolderImages.find((img) => img.id === "detection-before");
 
   return (
     <Card className="relative overflow-hidden bg-black aspect-video border-primary/20 shadow-2xl">
@@ -72,8 +78,8 @@ export function LiveFeed() {
               strokeWidth="0.5"
               className="animate-pulse"
             />
-            <foreignObject x={d.x} y={d.y - 6} width="30" height="6">
-              <div className="bg-accent text-background text-[3px] font-bold px-1 uppercase whitespace-nowrap">
+            <foreignObject x={d.x} y={d.y - 6} width="20" height="6">
+              <div className="bg-accent text-background text-[2px] font-bold uppercase whitespace-nowrap">
                 {d.label} {(d.confidence * 100).toFixed(0)}%
               </div>
             </foreignObject>

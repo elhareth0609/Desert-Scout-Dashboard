@@ -17,6 +17,18 @@
       "description": "Satellite imagery of desert operation zone",
       "imageUrl": "https://picsum.photos/seed/tactical/1600/1000",
       "imageHint": "topographic desert"
+    },
+    {
+      "id": "detection-before",
+      "description": "Original drone footage before AI detection processing",
+      "imageUrl": "/images/before-ai-detection.jpg",
+      "imageHint": "original desert footage"
+    },
+    {
+      "id": "detection-after",
+      "description": "Drone footage after AI detection with bounding boxes",
+      "imageUrl": "/images/after-ai-detection.jpg",
+      "imageHint": "AI detection results with bounding boxes"
     }
   ]
 }
