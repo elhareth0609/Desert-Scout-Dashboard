@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { useUser } from "@/firebase";
@@ -13,12 +13,31 @@ import { Button } from "@/components/ui/button";
 export default function OperationsPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const [missionStatus, setMissionStatus] = useState<{ [key: string]: boolean }>({
+    "alpha-01": true,
+  });
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/login");
     }
   }, [user, isUserLoading, router]);
+
+  const handleNewMission = () => {
+    alert("New Mission dialog would open here");
+  };
+
+  const handleViewFeed = () => {
+    alert("Opening live feed for Alpha-01 Scan");
+  };
+
+  const handleStopMission = (missionId: string) => {
+    setMissionStatus(prev => ({
+      ...prev,
+      [missionId]: false
+    }));
+    alert(`Mission ${missionId} stopped`);
+  };
 
   if (isUserLoading || !user) return null;
 
@@ -32,7 +51,7 @@ export default function OperationsPage() {
             <h2 className="text-2xl font-headline font-bold uppercase tracking-tight">Active Operations</h2>
             <p className="text-muted-foreground text-sm">Real-time mission management and drone control status.</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90">
+          <Button className="bg-primary hover:bg-primary/90" onClick={handleNewMission}>
             <Play className="w-4 h-4 mr-2" />
             New Mission
           </Button>
@@ -71,10 +90,20 @@ export default function OperationsPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 text-[10px] uppercase font-bold tracking-widest">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 text-[10px] uppercase font-bold tracking-widest"
+                  onClick={handleViewFeed}
+                >
                   View Feed
                 </Button>
-                <Button variant="destructive" size="sm" className="px-3">
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="px-3"
+                  onClick={() => handleStopMission("alpha-01")}
+                >
                   <Square className="w-4 h-4" />
                 </Button>
               </div>

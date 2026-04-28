@@ -33,8 +33,30 @@ export function MapPanel() {
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState(16);
   const [selectedMarker, setSelectedMarker] = useState<Detection | null>(null);
+  const [searchCoords, setSearchCoords] = useState("");
+  const [mapCenter, setMapCenter] = useState({ lat: 33.504435, lng: 6.912352 });
   
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  // Handle coordinate search
+  const handleSearchCoordinates = (value: string) => {
+    setSearchCoords(value);
+    
+    if (!value.trim()) return;
+    
+    // Try to parse coordinates - supports formats: "33.504, 6.912" or "33.504,6.912"
+    const parts = value.split(",").map(p => p.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      
+      // Validate coordinates
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setMapCenter({ lat, lng });
+        setZoom(18); // Zoom in on the searched coordinates
+      }
+    }
+  };
   
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: apiKey || "",
@@ -145,7 +167,7 @@ export function MapPanel() {
     <Card className="relative overflow-hidden bg-neutral-900 aspect-[16/10] border-primary/20 shadow-2xl">
       <GoogleMap
         mapContainerStyle={mapContainerStyle}
-        center={droneLocation}
+        center={mapCenter}
         zoom={zoom}
         options={mapOptions}
       >
@@ -206,6 +228,8 @@ export function MapPanel() {
             <Input 
               placeholder="Search coordinates..." 
               className="pl-10 bg-background/80 backdrop-blur-md border-primary/20 h-9 text-xs"
+              value={searchCoords}
+              onChange={(e) => handleSearchCoordinates(e.target.value)}
             />
           </div>
         </div>
