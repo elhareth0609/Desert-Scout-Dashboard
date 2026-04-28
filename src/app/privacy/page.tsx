@@ -26,7 +26,7 @@ export default function PrivacyPage() {
       <main className="flex-1 max-w-4xl mx-auto py-24 px-6 space-y-12">
         <div className="space-y-4">
           <h1 className="text-4xl font-headline font-black uppercase tracking-tight">Privacy Policy</h1>
-          <p className="text-sm text-muted-foreground uppercase tracking-widest font-mono">Effective Date: Avril 28, 2026</p>
+          <p className="text-sm text-muted-foreground uppercase tracking-widest font-mono">Effective Date: May 28, 2026</p>
         </div>
 
         <div className="prose prose-invert max-w-none space-y-8">
