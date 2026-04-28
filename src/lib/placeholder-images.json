@@ -21,14 +21,14 @@
     {
       "id": "detection-before",
       "description": "Original drone footage before AI detection processing",
-      "imageUrl": "https://picsum.photos/seed/sand1/800/600",
-      "imageHint": "desert sand"
+      "imageUrl": "/images/before-ai-detection.jpg",
+      "imageHint": "original desert footage"
     },
     {
       "id": "detection-after",
       "description": "Drone footage after AI detection with bounding boxes",
-      "imageUrl": "https://picsum.photos/seed/sand2/800/600",
-      "imageHint": "desert detection"
+      "imageUrl": "/images/after-ai-detection.jpg",
+      "imageHint": "AI detection results with bounding boxes"
     }
   ]
 }
