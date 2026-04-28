@@ -83,9 +83,9 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-[100px] animate-pulse-slow" />
               <div className="relative z-10 w-full h-full border border-primary/10 rounded-2xl bg-card/30 backdrop-blur-3xl overflow-hidden shadow-2xl rotate-3">
                 <img 
-                  src="./images/desert-drone.png" 
+                  src="./images/Untitled design (3).png" 
                   alt="Scout Drone" 
-                  className="object-cover w-full h-full opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
+                  className="w-full h-full opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
                   data-ai-hint="drone desert"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
