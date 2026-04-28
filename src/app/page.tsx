@@ -1,158 +1,199 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { LiveFeed } from "@/components/dashboard/LiveFeed";
-import { TelemetryPanel } from "@/components/dashboard/TelemetryPanel";
-import { MapPanel } from "@/components/dashboard/MapPanel";
-import { DetectionLogs, LogEntry } from "@/components/dashboard/DetectionLogs";
-import { AIInsights } from "@/components/dashboard/AIInsights";
-import { Navbar } from "@/components/dashboard/Navbar";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import React from "react";
+import Link from "next/link";
+import { Shield, Target, Zap, Globe, ArrowRight, ChevronRight, Activity, Mail, Phone, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Database, Loader2 } from "lucide-react";
-import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { doc } from "firebase/firestore";
+import { useUser } from "@/firebase";
+import Image from "next/image";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
-export default function DashboardPage() {
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
-  const firestore = useFirestore();
-  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
-  const [isSeeding, setIsSeeding] = useState(false);
-
-  // For the dashboard, we'll assume we're looking at the most recent "Current" flight
-  // In a real app, this ID would be dynamic or stored in user profile
-  const activeFlightId = "FL-CURRENT-001";
-
-  const detectionsRef = useMemoFirebase(() => 
-    user ? collection(firestore, `users/${user.uid}/flightLogs/${activeFlightId}/detectionEvents`) : null,
-    [user, firestore, activeFlightId]
-  );
-
-  const detectionsQuery = useMemoFirebase(() => 
-    detectionsRef ? query(detectionsRef, orderBy("timestamp", "desc"), limit(10)) : null,
-    [detectionsRef]
-  );
-
-  const { data: firestoreLogs, isLoading: isLogsLoading } = useCollection<LogEntry>(detectionsQuery);
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
-  }, [user, isUserLoading, router]);
-
-  const handleSeedData = async () => {
-    if (!user) return;
-    setIsSeeding(true);
-    try {
-      // 1. Create a Flight Log
-      const flightRef = doc(firestore, `users/${user.uid}/flightLogs`, activeFlightId);
-      setDocumentNonBlocking(flightRef, {
-        id: activeFlightId,
-        startTime: new Date().toISOString(),
-        status: "ongoing",
-        description: "Active surveillance mission in Sector B-12"
-      }, { merge: true });
-
-      // 2. Add some Detection Events
-      const mockDetections = [
-        { detectedObjectType: "Camel", confidenceScore: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: new Date().toISOString(), altitudeMeters: 120, boundingBox: [100, 100, 200, 200], flightLogId: activeFlightId },
-        { detectedObjectType: "Vehicle Tracks", confidenceScore: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: new Date(Date.now() - 300000).toISOString(), altitudeMeters: 125, boundingBox: [150, 150, 250, 250], flightLogId: activeFlightId },
-        { detectedObjectType: "Human Activity", confidenceScore: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: new Date(Date.now() - 600000).toISOString(), altitudeMeters: 118, boundingBox: [50, 50, 100, 100], flightLogId: activeFlightId },
-      ];
-
-      for (const detection of mockDetections) {
-        addDocumentNonBlocking(detectionsRef!, detection);
-      }
-    } finally {
-      setTimeout(() => setIsSeeding(false), 1000);
-    }
-  };
-
-  if (isUserLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+export default function LandingPage() {
+  const { user } = useUser();
+  const beforeImg = PlaceHolderImages.find(img => img.id === "detection-before");
+  const afterImg = PlaceHolderImages.find(img => img.id === "detection-after");
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-accent/30 flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="h-20 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 px-6">
+        <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary rounded-lg shadow-lg shadow-primary/20">
+              <Shield className="w-6 h-6 text-background" />
+            </div>
+            <h1 className="font-headline font-black text-2xl tracking-tighter uppercase">
+              Desert Scout <span className="text-accent">OS</span>
+            </h1>
+          </div>
+          
+          <nav className="hidden md:flex items-center gap-8">
+            <Link href="#features" className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors">Features</Link>
+            <Link href="#vision" className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors">AI Vision</Link>
+            <Link href="#contact" className="text-sm font-bold uppercase tracking-widest hover:text-primary transition-colors">Contact</Link>
+          </nav>
 
-      <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1920px] mx-auto w-full">
-        {/* Left Column: Vision and Navigation */}
-        <div className="lg:col-span-8 space-y-6">
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Tactical Surveillance Feed</h2>
-              <div className="flex items-center gap-4">
-                {(!firestoreLogs || firestoreLogs.length === 0) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-7 text-[9px] uppercase tracking-widest border-primary/30 hover:bg-primary/10"
-                    onClick={handleSeedData}
-                    disabled={isSeeding}
-                  >
-                    {isSeeding ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Database className="w-3 h-3 mr-2" />}
-                    Seed Tactical Data
+          <div className="flex items-center gap-4">
+            {user ? (
+              <Link href="/dashboard">
+                <Button className="bg-primary hover:bg-primary/90 font-bold uppercase tracking-widest text-xs h-10">
+                  Launch Console <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" className="border-primary/20 hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-10 px-6">
+                  Operator Login
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="relative py-24 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
+                <Activity className="w-3 h-3 animate-pulse" /> Advanced Reconnaissance
+              </div>
+              <h2 className="text-6xl md:text-7xl font-headline font-black uppercase tracking-tighter leading-[0.9]">
+                Intelligence in the <span className="text-accent">Dunes</span>
+              </h2>
+              <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
+                Operating in Sector B-12. Real-time neural networks for remote surveillance in the most demanding desert environments.
+              </p>
+              <div className="flex gap-4">
+                <Link href="/login">
+                  <Button className="bg-primary text-background font-black uppercase tracking-widest h-14 px-10 text-sm">
+                    Start Mission <ChevronRight className="ml-2 w-5 h-5" />
                   </Button>
-                )}
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                  <span className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest">AES-256 Encrypted</span>
+                </Link>
+              </div>
+            </div>
+            <div className="relative aspect-square rounded-2xl border border-primary/10 overflow-hidden">
+              <Image src="https://picsum.photos/seed/guemar/800/800" alt="Guemar Recon" fill className="object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+            </div>
+          </div>
+        </section>
+
+        {/* AI Comparison Section */}
+        <section id="vision" className="py-24 bg-card/30 border-y border-border/40">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16 space-y-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary">Neural Analysis</h3>
+              <h2 className="text-4xl font-headline font-black uppercase">Edge-AI Detection Power</h2>
+              <p className="text-muted-foreground">Transform raw desert footage into actionable tactical intelligence instantly.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Search className="w-4 h-4" /> Raw Input Footage
+                </h4>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-border/50">
+                  <Image src={beforeImg?.imageUrl || ""} alt="Before AI" fill className="object-cover" data-ai-hint="desert raw" />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] font-mono">SIGNAL: ANALOG_RAW</div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                  <Target className="w-4 h-4" /> AI Enhanced Output
+                </h4>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-accent/50">
+                  <Image src={afterImg?.imageUrl || ""} alt="After AI" fill className="object-cover" data-ai-hint="desert detection" />
+                  <div className="absolute inset-0 border-2 border-accent/20" />
+                  <div className="absolute top-4 left-4 bg-accent text-background px-2 py-1 rounded text-[10px] font-bold">MODE: AI_ENABLED</div>
+                  <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded text-[10px] font-mono text-accent uppercase">Detections: 08</div>
                 </div>
               </div>
             </div>
-            <LiveFeed />
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Digital Positioning System</h2>
-            <MapPanel />
-          </section>
-        </div>
-
-        {/* Right Column: Intelligence and Telemetry */}
-        <div className="lg:col-span-4 space-y-6 flex flex-col h-full overflow-hidden">
-          <div className="shrink-0">
-            <TelemetryPanel />
           </div>
+        </section>
 
-          <div className="flex-1 flex flex-col gap-6 min-h-0 overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <DetectionLogs 
-                onSelectLog={setSelectedLog} 
-                logs={firestoreLogs || []} 
-                isLoading={isLogsLoading} 
-              />
-            </div>
-            <div className="shrink-0">
-              <AIInsights logs={firestoreLogs || []} />
+        {/* Features */}
+        <section id="features" className="py-24">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: Target, title: "Precision", desc: "98% accuracy in detecting movement patterns across sand dunes." },
+              { icon: Globe, title: "Global Sync", desc: "Instant data transmission from remote desert locations." },
+              { icon: Zap, title: "Edge Core", desc: "Low-latency processing optimized for tactical hardware." }
+            ].map((f, i) => (
+              <div key={i} className="p-8 rounded-2xl border border-primary/10 bg-background/50">
+                <f.icon className="w-10 h-10 text-primary mb-6" />
+                <h4 className="text-xl font-bold uppercase mb-2">{f.title}</h4>
+                <p className="text-muted-foreground text-sm">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Contact Information Section */}
+        <section id="contact" className="py-24 bg-primary/5 border-t border-border/40">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div className="space-y-8">
+                <h2 className="text-4xl font-headline font-black uppercase tracking-tight">Contact HQ</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  Our operational headquarters are located in El Oued, Algeria. For tactical support or business inquiries, reach out through our encrypted channels.
+                </p>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4 group">
+                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <Mail className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Operational Email</p>
+                      <p className="font-bold">desertscoutos@gmail.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 group">
+                    <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
+                      <Phone className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">WhatsApp Secure Line</p>
+                      <p className="font-bold">0796050416</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 group">
+                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <MapPin className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">HQ Location</p>
+                      <p className="font-bold">Guemar, El Oued - Algeria</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="relative aspect-video rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
+                 <Image src="https://picsum.photos/seed/eloued/1000/600" alt="El Oued HQ" fill className="object-cover opacity-60" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                 <div className="absolute bottom-6 left-6 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Base Established: El Oued</span>
+                 </div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </main>
 
-      <footer className="h-10 bg-card border-t border-border/50 px-6 flex items-center justify-between text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span>Link: MAVLINK/SAT</span>
+      <footer className="py-12 border-t border-border/40 bg-card/20 text-center">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col items-center gap-4">
+             <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <span className="font-headline font-black uppercase tracking-tighter">Desert Scout OS</span>
+             </div>
+             <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-[0.3em]">
+               &copy; 2024 Desert Scout AI Systems. V-TACTICAL 1.0. Guemar, Algeria.
+             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-accent" />
-            <span>AI CORE: NOMINAL</span>
-          </div>
-        </div>
-        <div>
-          EL OUED SECTOR B-12 // 33° 21' N 6° 52' E
         </div>
       </footer>
     </div>

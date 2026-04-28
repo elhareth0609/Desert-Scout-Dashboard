@@ -20,12 +20,12 @@ export function Navbar() {
     router.push("/login");
   };
 
-  if (!user && pathname !== "/login") return null;
+  if (!user) return null;
 
   return (
-    <header className="h-16 border-b border-border/50 bg-card/50 backdrop-blur-xl px-6 flex items-center justify-between sticky top-0 z-50">
+    <header className="h-16 border-b border-border/50 bg-card/50 backdrop-blur-xl px-6 flex items-center justify-between sticky top-0 z-50 shrink-0">
       <div className="flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <div className="p-2 bg-primary rounded-lg">
             <Shield className="w-5 h-5 text-background" />
           </div>
@@ -34,11 +34,11 @@ export function Navbar() {
           </h1>
         </Link>
         <nav className="hidden md:flex items-center gap-1 ml-8">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button 
               variant="ghost" 
               size="sm" 
-              className={`text-xs uppercase font-bold tracking-widest ${pathname === '/' ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`text-xs uppercase font-bold tracking-widest ${pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground'}`}
             >
               Dashboard
             </Button>

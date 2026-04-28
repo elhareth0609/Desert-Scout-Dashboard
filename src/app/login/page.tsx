@@ -3,13 +3,14 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Lock, Mail, Loader2 } from "lucide-react";
+import { Shield, Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@desertscout.ai");
@@ -24,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -37,8 +38,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-background to-background">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-background to-background relative overflow-hidden">
+      <div className="absolute top-8 left-8">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="font-bold uppercase tracking-widest text-xs">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Return to Base
+          </Button>
+        </Link>
+      </div>
+
+      <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center space-y-2">
           <div className="inline-flex p-4 bg-primary rounded-2xl shadow-xl shadow-primary/20 animate-pulse-slow">
             <Shield className="w-10 h-10 text-background" />
