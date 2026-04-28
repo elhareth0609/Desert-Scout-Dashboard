@@ -99,7 +99,7 @@ export default function LoginPage() {
                 {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Initiate Connection"}
               </Button>
               <div className="text-center">
-                <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
+                <p className="text-[16px] text-muted-foreground font-mono tracking-tighter">
                   Default credentials: admin@desertscout.ai / password123
                 </p>
               </div>
