@@ -193,12 +193,21 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="relative aspect-video rounded-2xl overflow-hidden border border-primary/20 shadow-2xl">
-                 <Image src="https://picsum.photos/seed/eloued/1000/600" alt="El Oued HQ" fill className="object-cover opacity-60" />
-                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-                 <div className="absolute bottom-6 left-6 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Base Established: El Oued</span>
-                 </div>
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3277.123456789!2d6.851686!3d33.367589!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDIyJzAzLjMiTiA2wrA1MScwNi4xIkU!5e0!3m2!1sen!2sdz!4v1234567890"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="opacity-80 hover:opacity-100 transition-opacity duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Base Established: El Oued</span>
+                </div>
               </div>
             </div>
           </div>
