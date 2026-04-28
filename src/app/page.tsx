@@ -54,30 +54,52 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative py-24 overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(var(--primary),0.1),transparent)]" />
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
+            <div className="space-y-8 relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
-                <Activity className="w-3 h-3 animate-pulse" /> Advanced Reconnaissance
+                <Activity className="w-3 h-3 animate-pulse" /> AI-Powered Reconnaissance
               </div>
               <h2 className="text-6xl md:text-7xl font-headline font-black uppercase tracking-tighter leading-[0.9]">
-                Intelligence in the <span className="text-accent">Dunes</span>
+                Secure the <span className="text-accent">Sands</span> with Intelligence
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
-                Operating in Sector B-12. Real-time neural networks for remote surveillance in the most demanding desert environments.
+                The next generation of desert surveillance. Real-time AI detection, satellite-grade telemetry, and automated scouting for mission-critical operations.
               </p>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link href="/login">
-                  <Button className="bg-primary text-background font-black uppercase tracking-widest h-14 px-10 text-sm">
-                    Start Mission <ChevronRight className="ml-2 w-5 h-5" />
+                  <Button className="bg-primary text-background font-black uppercase tracking-widest h-14 px-10 text-sm shadow-xl shadow-primary/20 group">
+                    Start Mission <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link href="#features">
+                  <Button variant="ghost" className="h-14 px-10 font-bold uppercase tracking-widest text-xs">
+                    Explore Platform
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="relative aspect-square rounded-2xl border border-primary/10 overflow-hidden">
-              <Image src="https://picsum.photos/seed/guemar/800/800" alt="Guemar Recon" fill className="object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+            <div className="relative aspect-square">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-[100px] animate-pulse-slow" />
+              <div className="relative z-10 w-full h-full border border-primary/10 rounded-2xl bg-card/30 backdrop-blur-3xl overflow-hidden shadow-2xl rotate-3">
+                <img 
+                  src="https://picsum.photos/seed/drone-landing/800/800" 
+                  alt="Scout Drone" 
+                  className="object-cover w-full h-full opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
+                  data-ai-hint="drone desert"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 p-6 border border-white/10 rounded-xl bg-white/5 backdrop-blur-xl">
+                   <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em]">
+                      <span>Signal: Locked</span>
+                      <span>Sector: B-12</span>
+                   </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
+
 
         {/* AI Comparison Section */}
         <section id="vision" className="py-24 bg-card/30 border-y border-border/40">
@@ -107,7 +129,7 @@ export default function LandingPage() {
                   <Image src={afterImg?.imageUrl || ""} alt="After AI" fill className="object-cover" data-ai-hint="desert detection" />
                   <div className="absolute inset-0 border-2 border-accent/20" />
                   <div className="absolute top-4 left-4 bg-accent text-background px-2 py-1 rounded text-[10px] font-bold">MODE: AI_ENABLED</div>
-                  <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded text-[10px] font-mono text-accent uppercase">Detections: 08</div>
+                  <div className="absolute bottom-4 right-4 bg-black/80 px-3 py-1 rounded text-[10px] font-mono text-accent uppercase">Detections: 11</div>
                 </div>
               </div>
             </div>
