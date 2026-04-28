@@ -141,9 +141,9 @@ export function Navbar() {
             </div>
           )}
         </div>
-        <Button variant="ghost" size="icon">
+        {/* <Button variant="ghost" size="icon">
           <Settings className="w-5 h-5" />
-        </Button>
+        </Button> */}
         <div className="h-8 w-px bg-border/50 mx-2" />
         <div className="flex items-center gap-3 bg-secondary/30 pl-3 pr-1 py-1 rounded-full border border-border/50">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
