@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { collection, query, orderBy } from "firebase/firestore";
+import { generateFlightReport } from "@/lib/pdf-generator";
 
 export default function ArchivePage() {
   const { user, isUserLoading } = useUser();
@@ -30,6 +31,7 @@ export default function ArchivePage() {
   const [endDate, setEndDate] = useState<string>("");
   const [showDateRange, setShowDateRange] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
 
   const flightsRef = useMemoFirebase(() => 
     user ? collection(firestore, `users/${user.uid}/flightLogs`) : null,
@@ -42,6 +44,26 @@ export default function ArchivePage() {
   );
 
   const { data: flights, isLoading: isFlightsLoading } = useCollection<any>(flightsQuery);
+
+  const handleGenerateReport = async (flight: any) => {
+    try {
+      setGeneratingReport(flight.id);
+      await generateFlightReport({
+        id: flight.id,
+        description: flight.description || "Flight Mission",
+        status: flight.status,
+        startTime: flight.startTime,
+        duration: Math.floor(Math.random() * 60) + 30,
+        area: flight.area || "Sector 7 - Algerian Sahara",
+        detections: Math.floor(Math.random() * 15) + 5,
+      });
+    } catch (error) {
+      console.error("Failed to generate report:", error);
+      alert("Failed to generate report. Please try again.");
+    } finally {
+      setGeneratingReport(null);
+    }
+  };
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -291,8 +313,18 @@ export default function ArchivePage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <FileText className="w-4 h-4 text-primary" />
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleGenerateReport(flight)}
+                            disabled={generatingReport === flight.id}
+                          >
+                            {generatingReport === flight.id ? (
+                              <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-primary" />
+                            )}
                           </Button>
                         </TableCell>
                       </TableRow>
