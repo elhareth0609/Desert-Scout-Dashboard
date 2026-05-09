@@ -5,13 +5,15 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/dashboard/Navbar";
 import { useUser } from "@/firebase";
+import { useCameraStatus } from "@/firebase";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Play, Square, Activity, Wifi, Radio, Cpu, BatteryFull } from "lucide-react";
+import { Play, Square, Activity, Wifi, Radio, Cpu, BatteryFull, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function OperationsPage() {
   const { user, isUserLoading } = useUser();
+  const { cameraStatus, isLoading: cameraLoading } = useCameraStatus();
   const router = useRouter();
   const [missionStatus, setMissionStatus] = useState<{ [key: string]: boolean }>({
     "alpha-01": true,
@@ -38,6 +40,8 @@ export default function OperationsPage() {
     }));
     alert(`Mission ${missionId} stopped`);
   };
+
+  const isCameraActive = cameraStatus?.status === 'active';
 
   if (isUserLoading || !user) return null;
 
@@ -110,6 +114,49 @@ export default function OperationsPage() {
             </CardContent>
           </Card>
 
+          {/* Camera Status - Real-time from Firebase */}
+          <Card className={`bg-card/50 border-primary/20 relative overflow-hidden ${isCameraActive ? 'border-accent/50' : 'border-primary/10'}`}>
+            <div className="absolute top-0 right-0 p-2">
+              <Badge 
+                variant={isCameraActive ? "destructive" : "secondary"} 
+                className={isCameraActive ? "animate-pulse" : ""}
+              >
+                {isCameraActive ? "Recording" : "Standby"}
+              </Badge>
+            </div>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Camera className="w-5 h-5 text-accent" />
+                Camera Feed
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className={`p-4 rounded-lg text-center ${isCameraActive ? 'bg-accent/10 border border-accent/30' : 'bg-secondary/30 border border-border/10'}`}>
+                <div className="text-sm font-bold uppercase tracking-wider mb-2">
+                  {isCameraActive ? "Live" : "Offline"}
+                </div>
+                <div className="text-2xl font-bold flex items-center justify-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${isCameraActive ? 'bg-accent animate-pulse' : 'bg-muted-foreground'}`} />
+                  {cameraLoading ? "—" : isCameraActive ? "Recording" : "Standby"}
+                </div>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between p-2 bg-secondary/10 rounded">
+                  <span className="text-muted-foreground">Device</span>
+                  <span className="font-mono font-bold">{cameraStatus?.device || "N/A"}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-secondary/10 rounded">
+                  <span className="text-muted-foreground">Last Update</span>
+                  <span className="font-mono text-accent">
+                    {cameraStatus?.timestamp 
+                      ? new Date(cameraStatus.timestamp).toLocaleTimeString() 
+                      : "N/A"}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* System Health */}
           <Card className="bg-card/50 border-primary/10">
             <CardHeader>
@@ -167,3 +214,4 @@ export default function OperationsPage() {
     </div>
   );
 }
+
