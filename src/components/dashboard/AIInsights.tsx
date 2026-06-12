@@ -13,7 +13,7 @@ export function AIInsights({ logs }: { logs: any[] }) {
   const [error, setError] = useState<string | null>(null);
 
   // Check if AI analysis is disabled for presentations
-  const isDisabled = process.env.NEXT_PUBLIC_DISABLE_AI_ANALYSIS === "true";
+  const isDisabled = process.env.NEXT_PUBLIC_DISABLE_AI_ANALYSIS === "false";
 
   const handleAnalyze = async () => {
     if (isDisabled) {
