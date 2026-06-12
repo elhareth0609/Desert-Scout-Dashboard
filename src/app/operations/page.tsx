@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Square, Activity, Wifi, Radio, Cpu, BatteryFull, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MOCK_SYSTEM_LOGS, getCategoryColor, SystemLog } from "@/lib/mock-system-logs";
 
 export default function OperationsPage() {
   const { user, isUserLoading } = useUser();
@@ -18,6 +19,7 @@ export default function OperationsPage() {
   const [missionStatus, setMissionStatus] = useState<{ [key: string]: boolean }>({
     "alpha-01": true,
   });
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>(MOCK_SYSTEM_LOGS);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -184,7 +186,7 @@ export default function OperationsPage() {
           </Card>
 
            {/* Comms */}
-           <Card className="bg-card/50 border-primary/10 lg:col-span-1">
+           <Card className="bg-card/50 border-primary/10 lg:col-span-2">
             <CardHeader>
               <CardTitle className="text-sm uppercase tracking-widest flex items-center gap-2">
                 <Radio className="w-4 h-4" />
@@ -192,20 +194,37 @@ export default function OperationsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 h-[180px] overflow-y-auto custom-scrollbar pr-2">
-                {[
-                  "GCS Link Established",
-                  "MAVLink Handshake Complete",
-                  "AI Module: Camel Detection initialized",
-                  "Telemetry streaming on UDP 14550",
-                  "Video Feed secure at AES-256",
-                  "Operator 01 Session Active",
-                ].map((log, idx) => (
-                  <div key={idx} className="text-[9px] font-mono border-l-2 border-primary/30 pl-2 py-1 bg-primary/5">
-                    <span className="text-muted-foreground mr-2">[{new Date().toLocaleTimeString()}]</span>
-                    {log}
-                  </div>
-                ))}
+              <div className="space-y-2 h-[180px] overflow-y-auto custom-scrollbar pr-2">
+                {systemLogs.map((log) => {
+                  const categoryColor = getCategoryColor(log.category);
+                  const borderColor =
+                    categoryColor === "destructive"
+                      ? "border-red-500/50"
+                      : categoryColor === "accent"
+                      ? "border-accent/50"
+                      : "border-primary/30";
+                  const textColor =
+                    categoryColor === "destructive"
+                      ? "text-red-400"
+                      : categoryColor === "accent"
+                      ? "text-accent"
+                      : "text-primary";
+
+                  return (
+                    <div
+                      key={log.id}
+                      className={`text-[12px] font-mono border-l-2 ${borderColor} pl-2 py-1 bg-primary/5 rounded-r`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-muted-foreground/70 shrink-0">[{log.timestamp}]</span>
+                        <span className={`font-bold shrink-0 uppercase w-14 ${textColor}`}>
+                          {log.category}
+                        </span>
+                        <span className="text-muted-foreground break-words">{log.message}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

@@ -66,8 +66,12 @@ export function DetectionLogs({ onSelectLog, logs, isLoading }: DetectionLogsPro
           <ScrollArea className="h-full">
             <div className="p-4 space-y-3">
               {filteredLogs.length === 0 && (
-                <div className="text-center py-10 text-muted-foreground text-xs font-mono uppercase">
-                  No operational data found
+                <div className="text-center py-12 px-4 space-y-3">
+                  <AlertTriangle className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+                  <div>
+                    <p className="text-xs font-mono uppercase text-muted-foreground">Awaiting Detection Feed</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-2">Waiting for Raspberry Pi transmission...</p>
+                  </div>
                 </div>
               )}
               {filteredLogs.map((log) => (

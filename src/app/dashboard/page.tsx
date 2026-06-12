@@ -14,6 +14,7 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Database, Loader2 } from "lucide-react";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { SAMPLE_DETECTIONS, generateMockDetectionBatch } from "@/lib/mock-detections";
 import { doc } from "firebase/firestore";
 
 export default function DashboardPage() {
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [isSeeding, setIsSeeding] = useState(false);
+  const [useMockData, setUseMockData] = useState(false);
 
   const activeFlightId = "FL-CURRENT-001";
 
@@ -36,6 +38,11 @@ export default function DashboardPage() {
   );
 
   const { data: firestoreLogs, isLoading: isLogsLoading } = useCollection<LogEntry>(detectionsQuery);
+
+  // Use mock data if no real data and useMockData is enabled
+  const displayLogs = useMockData && (!firestoreLogs || firestoreLogs.length === 0) 
+    ? SAMPLE_DETECTIONS 
+    : (firestoreLogs || []);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -55,11 +62,13 @@ export default function DashboardPage() {
         description: "Active surveillance mission in Sector B-12"
       }, { merge: true });
 
-      const mockDetections = [
-        { detectedObjectType: "Camel", confidenceScore: 0.94, latitude: 33.3678, longitude: 6.8512, timestamp: new Date().toISOString(), altitudeMeters: 120, boundingBox: [100, 100, 200, 200], flightLogId: activeFlightId },
-        { detectedObjectType: "Vehicle Tracks", confidenceScore: 0.82, latitude: 33.3682, longitude: 6.8521, timestamp: new Date(Date.now() - 300000).toISOString(), altitudeMeters: 125, boundingBox: [150, 150, 250, 250], flightLogId: activeFlightId },
-        { detectedObjectType: "Human Activity", confidenceScore: 0.76, latitude: 33.3665, longitude: 6.8505, timestamp: new Date(Date.now() - 600000).toISOString(), altitudeMeters: 118, boundingBox: [50, 50, 100, 100], flightLogId: activeFlightId },
-      ];
+      // Use sample detections with dynamic generation
+      const mockDetections = generateMockDetectionBatch(5).map(detection => ({
+        ...detection,
+        altitudeMeters: 120 + Math.random() * 20,
+        boundingBox: [100, 100, 200, 200],
+        flightLogId: activeFlightId,
+      }));
 
       for (const detection of mockDetections) {
         addDocumentNonBlocking(detectionsRef!, detection);
@@ -88,16 +97,37 @@ export default function DashboardPage() {
               <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Tactical Surveillance Feed</h2>
               <div className="flex items-center gap-4">
                 {(!firestoreLogs || firestoreLogs.length === 0) && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-7 text-[9px] uppercase tracking-widest border-primary/30 hover:bg-primary/10"
-                    onClick={handleSeedData}
-                    disabled={isSeeding}
-                  >
-                    {isSeeding ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Database className="w-3 h-3 mr-2" />}
-                    Seed Tactical Data
-                  </Button>
+                  <div className="flex gap-2">
+                    {!useMockData ? (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[9px] uppercase tracking-widest border-primary/30 hover:bg-primary/10"
+                        onClick={() => setUseMockData(true)}
+                      >
+                        Load Sample Data
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[9px] uppercase tracking-widest border-accent/30 hover:bg-accent/10"
+                        onClick={() => setUseMockData(false)}
+                      >
+                        Clear Sample Data
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-[9px] uppercase tracking-widest border-primary/30 hover:bg-primary/10"
+                      onClick={handleSeedData}
+                      disabled={isSeeding}
+                    >
+                      {isSeeding ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : <Database className="w-3 h-3 mr-2" />}
+                      Seed Firebase Data
+                    </Button>
+                  </div>
                 )}
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
@@ -123,12 +153,12 @@ export default function DashboardPage() {
             <div className="flex-1 overflow-hidden">
               <DetectionLogs 
                 onSelectLog={setSelectedLog} 
-                logs={firestoreLogs || []} 
-                isLoading={isLogsLoading} 
+                logs={displayLogs} 
+                isLoading={isLogsLoading && !useMockData} 
               />
             </div>
             <div className="shrink-0">
-              <AIInsights logs={firestoreLogs || []} />
+              <AIInsights logs={displayLogs} />
             </div>
           </div>
         </div>
