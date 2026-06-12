@@ -12,7 +12,15 @@ export function AIInsights({ logs }: { logs: any[] }) {
   const [result, setResult] = useState<AnalyzeDetectionLogsOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if AI analysis is disabled for presentations
+  const isDisabled = process.env.NEXT_PUBLIC_DISABLE_AI_ANALYSIS === "true";
+
   const handleAnalyze = async () => {
+    if (isDisabled) {
+      setError("AI analysis is currently disabled. Enable in environment settings to use.");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -124,8 +132,9 @@ export function AIInsights({ logs }: { logs: any[] }) {
       <CardFooter className="pt-2 border-t border-border/10">
         <Button 
           onClick={handleAnalyze} 
-          disabled={loading || logs.length === 0}
-          className="w-full bg-accent hover:bg-accent/80 text-background font-bold uppercase tracking-widest text-xs h-10 group"
+          disabled={loading || logs.length === 0 || isDisabled}
+          className="w-full bg-accent hover:bg-accent/80 text-background font-bold uppercase tracking-widest text-xs h-10 group disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isDisabled ? "AI Analysis disabled for presentation mode" : ""}
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -134,7 +143,7 @@ export function AIInsights({ logs }: { logs: any[] }) {
           ) : (
             <Sparkles className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" />
           )}
-          {loading ? "Analyzing..." : error ? "Retry Analysis" : result ? "Re-Analyze Logs" : "Generate Report"}
+          {isDisabled ? "AI Disabled" : loading ? "Analyzing..." : error ? "Retry Analysis" : result ? "Re-Analyze Logs" : "Generate Report"}
         </Button>
       </CardFooter>
     </Card>
