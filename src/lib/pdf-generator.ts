@@ -32,7 +32,7 @@ export const generateFlightReport = async (flight: FlightData): Promise<void> =>
   const formattedTime = flightDate.toLocaleTimeString("en-US");
 
   // Generate mock detection data
-  const mockDetections = Math.floor(Math.random() * 15) + 5;
+  const mockDetections = 6;
   const mockThreatLevel = ["LOW", "MEDIUM", "HIGH"][Math.floor(Math.random() * 3)];
 
   // Create the HTML content
@@ -136,7 +136,7 @@ export const generateFlightReport = async (flight: FlightData): Promise<void> =>
           ${Array.from({ length: Math.min(mockDetections, 6) })
             .map((_, i) => {
               const detectionTime = new Date(flightDate.getTime() + i * 300000).toLocaleTimeString();
-              const types = ["Vehicle", "Personnel", "Structure", "Anomaly", "Equipment"];
+              const types = ["HUMAN", "HUMAN", "HUMAN", "HUMAN", "HUMAN", "HUMAN"];
               const type = types[Math.floor(Math.random() * types.length)];
               const confidence = Math.floor(Math.random() * 40) + 60;
               return `
