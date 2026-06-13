@@ -5,7 +5,7 @@
 
 import { LogEntry } from "@/components/dashboard/DetectionLogs";
 
-const DETECTION_TYPES = ["Camel", "Vehicle Tracks", "Human Activity", "Equipment", "Structure"];
+const DETECTION_TYPES = ["Animal Tracks", "Vehicle Tracks", "Human Tracks"];
 
 const REAL_COORDINATES = [
   { lat: 33.3678, lon: 6.8512, name: "Sector B-12" },
@@ -27,11 +27,9 @@ export function generateMockDetection(index: number = 0): LogEntry {
   
   // Realistic confidence scores based on detection type
   const confidenceByType: Record<string, number> = {
-    "Camel": 0.92 + Math.random() * 0.07,
+    "Animal Tracks": 0.92 + Math.random() * 0.07,
     "Vehicle Tracks": 0.85 + Math.random() * 0.12,
-    "Human Activity": 0.78 + Math.random() * 0.15,
-    "Equipment": 0.88 + Math.random() * 0.09,
-    "Structure": 0.91 + Math.random() * 0.08,
+    "Human Tracks": 0.78 + Math.random() * 0.15,
   };
   
   const timeOffset = index * 5 * 60 * 1000; // 5 minutes between detections
@@ -55,7 +53,7 @@ export const NO_DATA_MESSAGE = "Awaiting detection feed from Raspberry Pi...";
 export const SAMPLE_DETECTIONS: LogEntry[] = [
   {
     id: "sample-1",
-    detectedObjectType: "Camel",
+    detectedObjectType: "Animal Tracks",
     confidenceScore: 0.94,
     latitude: 33.3678,
     longitude: 6.8512,
@@ -71,7 +69,7 @@ export const SAMPLE_DETECTIONS: LogEntry[] = [
   },
   {
     id: "sample-3",
-    detectedObjectType: "Human Activity",
+    detectedObjectType: "Human Tracks",
     confidenceScore: 0.76,
     latitude: 33.3665,
     longitude: 6.8505,
@@ -79,7 +77,7 @@ export const SAMPLE_DETECTIONS: LogEntry[] = [
   },
   {
     id: "sample-4",
-    detectedObjectType: "Equipment",
+    detectedObjectType: "Human Tracks",
     confidenceScore: 0.88,
     latitude: 33.3690,
     longitude: 6.8530,
@@ -87,7 +85,7 @@ export const SAMPLE_DETECTIONS: LogEntry[] = [
   },
   {
     id: "sample-5",
-    detectedObjectType: "Camel",
+    detectedObjectType: "Animal Tracks",
     confidenceScore: 0.91,
     latitude: 33.3655,
     longitude: 6.8495,
